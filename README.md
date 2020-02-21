@@ -63,7 +63,7 @@ Also in the advanced mode you have the chance to use spot instances instead of o
 
 `workspace_prototyping.ipynb` -- jupyter notebook for running the same thing as `etl.py` on the Udacity workspace
 
-`copy_to_s3.sh` -- copies files from HDFS to S3 bucket.  Writing parquet to HDFS then copying with s3-dist-copy to S3 is much faster than writing parquet files directly to the S3 bucket.
+`copy_to_s3.sh` -- copies files from HDFS to S3 bucket.  Writing parquet to HDFS then copying with s3-dist-copy to S3 is much faster than writing parquet files directly to the S3 bucket.  Run `time ./copy_to_s3.sh` to see how long the process takes (after making it executable with `sudo chmod a+x copy_to_s3.sh`)
 
 ## Other discussion
 
@@ -73,3 +73,147 @@ This database is to take log data from users playing songs on Sparkify's app and
 
 2. State and justify the database schema design and ETL pipeline.
 The database design is a star schema which is pretty common for extracting business insights.  The ETL pipeline loads log and song data from S3, then creates tables in Spark, and saves it back to S3 as parquet tables.  The data is partitioned according to things like year and month, which make sense in terms of the queries that will be run.
+
+
+## Loading/writing times
+
+### Writing parquet to S3 with m5.xlarge 3-machine cluster
+reading song data...
+('took', 134, 'seconds')
+
+writing songs table...
+('took', 1366, 's to write songs table')
+
+writing artists table...
+('took', 63, 's to write artists table')
+
+reading logs data...
+('took', 1, 'seconds')
+
+writing users table...
+('took', 8, 's to write users table')
+
+writing time table...
+('took', 26, 's to write time table')
+
+reading songs parquet tables...
+('took', 945, 's to read')
+
+reading artists parquet tables...
+('took', 1, 's to read')
+
+writing songplays table...
+('took', 307, 's to write songplays table')
+
+**Total time:** 2851s or 47.5 minutes
+
+### Writing parquet to HDFS with m5.xlarge 3-machine cluster
+
+reading song data...
+('took', 138, 'seconds')
+
+writing songs table...
+('took', 94, 's to write songs table')
+
+writing artists table...
+('took', 47, 's to write artists table')
+
+reading logs data...
+('took', 1, 'seconds')
+
+writing users table...
+('took', 1, 's to write users table')
+
+writing time table...
+('took', 3, 's to write time table')
+
+reading songs parquet tables...
+('took', 15, 's to read')
+
+reading artists parquet tables...
+('took', 0, 's to read')
+
+joining tables...
+('took', 0, 's to join')
+
+writing songplays table...
+('took', 19, 's to write songplays table')
+
+#### Copying HDFS to S3
+
+166s
+
+**Total time:** 484s or 8 minutes
+
+**Speedup factor vs S3 direct read/write:** about 6x
+
+### Writing parquet to S3 with m5.2xlarge 5-machine cluster:
+reading song data...
+('took', 76, 'seconds')
+
+writing songs table...
+('took', 394, 's to write songs table')
+
+writing artists table...
+('took', 18, 's to write artists table')
+
+reading logs data...
+('took', 1, 'seconds')
+
+writing users table...
+('took', 3, 's to write users table')
+
+writing time table...
+('took', 8, 's to write time table')
+
+reading songs parquet tables...
+
+('took', 936, 's to read')
+
+reading artists parquet tables...
+('took', 1, 's to read')
+
+writing songplays table...
+('took', 81, 's to write songplays table')
+
+**Total time:** 1518s or 25 minutes
+
+### Writing parquet to HDFS with m5.2xlarge 5-machine cluster:
+
+reading song data...
+('took', 74, 'seconds')
+
+writing songs table...
+('took', 34, 's to write songs table')
+
+writing artists table...
+('took', 11, 's to write artists table')
+
+reading logs data...
+('took', 1, 'seconds')
+
+writing users table...
+('took', 1, 's to write users table')
+
+writing time table...
+('took', 2, 's to write time table')
+
+reading songs parquet tables...
+('took', 7, 's to read')
+
+reading artists parquet tables...
+('took', 0, 's to read')
+
+joining tables...
+('took', 0, 's to join')
+
+writing songplays table...
+('took', 8, 's to write songplays table')
+
+#### Copying HDFS to S3
+
+132s
+
+**Total time:** 270s or 4.5 minutes
+
+**Speedup factor vs S3 direct read/write:** about 5.5x

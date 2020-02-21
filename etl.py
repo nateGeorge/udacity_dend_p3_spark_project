@@ -123,10 +123,18 @@ def process_log_data(spark, input_data, output_data):
     print('took', int(end-start), 's to write time table')
 
     # read in song data to use for songplays table
+    print('reading songs parquet tables...')
+    start = time.time()
     songs_df = spark.read.parquet(output_data + 'songs/*/*/*')
+    end = time.time()
+    print('took', int(end-start), 's to read')
 
     # read in artist data
+    print('reading artists parquet tables...')
+    start = time.time()
     artists_df = spark.read.parquet(output_data + 'artists/*')
+    end = time.time()
+    print('took', int(end-start), 's to read')
 
     # extract columns from joined song and log datasets to create songplays table
     # columns desired: songplay_id, start_time, user_id, level, song_id, artist_id, session_id, location, user_agent
@@ -134,9 +142,13 @@ def process_log_data(spark, input_data, output_data):
     # need to join on song title and artist name
 
     # first join songs and logs dfs on song title
+    print('joining tables...')
+    start = time.time()
     songs_logs_df = df.join(songs_df, (df.song == songs_df.title))
     # next join that df with artists on artist name
     artists_songs_logs_df = songs_logs_df.join(artists_df, (songs_logs_df.artist == artists_df.artist_name))
+    end = time.time()
+    print('took', int(end-start), 's to join')
 
 
     songplay_cols = ['start_time', 'userId', 'level', 'song_id', 'artist_id', 'sessionId', 'location', 'userAgent']
@@ -169,8 +181,8 @@ def main():
     sc._jsc.hadoopConfiguration().set("mapreduce.fileoutputcommitter.algorithm.version", "2")
 
     input_data = "s3a://udacity-dend/"
-    output_data = "s3a://udacity-dend-spark-dwh2/"
-    # output_data = "hdfs:///dwh/"
+    #output_data = "s3a://udacity-dend-spark-dwh2/"
+    output_data = "hdfs:///dwh/"
 
     process_song_data(spark, input_data, output_data)
     process_log_data(spark, input_data, output_data)
